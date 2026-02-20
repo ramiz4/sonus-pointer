@@ -1,16 +1,23 @@
-name: CI
+name: CI / Deploy
 
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
-    branches: ['**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -28,3 +35,32 @@ jobs:
         run: pnpm test
       - name: Build
         run: pnpm build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      actions: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
