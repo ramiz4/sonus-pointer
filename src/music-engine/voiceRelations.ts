@@ -98,5 +98,5 @@ export function deriveAllVoices(
  */
 export function isConsonant(note1: number, note2: number): boolean {
   const interval = Math.abs(note1 - note2) % 12
-  return [0, 3, 4, 5, 7, 8, 9, 12].indexOf(interval) !== -1
+  return [0, 3, 4, 5, 7, 8, 9].indexOf(interval) !== -1
 }

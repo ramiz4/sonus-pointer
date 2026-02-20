@@ -14,6 +14,8 @@ interface ActiveNote {
   noteNumber: number
 }
 
+const SECONDARY_VOICE_VELOCITY_SCALE = 0.6
+
 const Canvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
@@ -37,13 +39,14 @@ const Canvas: React.FC = () => {
   engine.setMaxVoices(polyphony)
 
   // Update constraint engine config when root changes
+  const effectiveRoot = rootNote + currentOctaveShift * 12
   useEffect(() => {
     constraintEngine.updateConfig({
-      tonalField: { rootNote: rootNote + currentOctaveShift * 12, baseOctave: 0, octaveRange: octaves },
-      gravity: { rootNote: rootNote + currentOctaveShift * 12, gravityStrength: 0.6 },
+      tonalField: { rootNote: effectiveRoot, baseOctave: 0, octaveRange: octaves },
+      gravity: { rootNote: effectiveRoot, gravityStrength: 0.6 },
       enabled: tonalFieldEnabled,
     })
-  }, [rootNote, currentOctaveShift, octaves, tonalFieldEnabled])
+  }, [effectiveRoot, octaves, tonalFieldEnabled])
 
   // Draw tonal map visualization
   useEffect(() => {
@@ -146,7 +149,7 @@ const Canvas: React.FC = () => {
         // Play new secondary voices
         for (let i = 0; i < secondaryNotes.length; i++) {
           const svId = `secondary-${i}`
-          engine.noteOn(svId, secondaryNotes[i], Math.round(velocity * 0.6))
+          engine.noteOn(svId, secondaryNotes[i], Math.round(velocity * SECONDARY_VOICE_VELOCITY_SCALE))
           secondaryVoiceIds.current.push(svId)
         }
       }
