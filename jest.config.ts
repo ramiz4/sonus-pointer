@@ -17,6 +17,7 @@ const config: Config = {
           esModuleInterop: true,
           strict: false,
           verbatimModuleSyntax: false,
+          types: ['jest', '@testing-library/jest-dom'],
         },
       },
     ],

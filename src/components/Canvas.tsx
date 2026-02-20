@@ -1,16 +1,12 @@
 import React, { useRef, useCallback } from 'react'
 import { useStore } from '../store'
-import { AudioEngine } from '../audio/engine'
-import { MidiAdapter } from '../midi/adapter'
+import { engine, midi } from '../services'
 import {
   getScaleNotes,
   normalizeMousePosition,
   mapPositionToPitch,
   mapPositionToVelocity,
 } from '../utils/mapping'
-
-const engine = new AudioEngine(4)
-const midi = new MidiAdapter()
 
 interface ActiveNote {
   voiceId: string

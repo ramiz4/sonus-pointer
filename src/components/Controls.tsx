@@ -1,9 +1,7 @@
 import React, { useCallback } from 'react'
 import { useStore } from '../store'
 import type { ScaleType } from '../utils/mapping'
-import { MidiAdapter } from '../midi/adapter'
-
-const midi = new MidiAdapter()
+import { midi } from '../services'
 
 const Controls: React.FC = () => {
   const {
