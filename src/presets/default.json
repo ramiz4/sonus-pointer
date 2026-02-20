@@ -1,0 +1,12 @@
+{
+  "name": "Default",
+  "scaleType": "diatonic",
+  "polyphony": 4,
+  "synth": {
+    "attack": 0.01,
+    "decay": 0.1,
+    "sustain": 0.8,
+    "release": 0.3,
+    "waveform": "sine"
+  }
+}
