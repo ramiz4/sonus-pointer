@@ -55,7 +55,10 @@ export function deriveVoice(
     }
 
     case 'intervalFollower': {
-      // Follow at interval, but constrained to move stepwise when primary leaps
+      // Follow at interval, but constrained to move stepwise when primary leaps.
+      // Note: previousDerived is recomputed from previousPrimaryNote + interval
+      // rather than tracked externally, so clamping at MIDI boundaries may cause
+      // slight drift. This is acceptable for musical purposes.
       const baseNote = primaryNote + relation.interval
       if (previousPrimaryNote === null) {
         result = baseNote

@@ -1,7 +1,5 @@
 import { create } from 'zustand'
 import type { ScaleType } from '../utils/mapping'
-import type { ConstraintEngineConfig } from '../music-engine'
-import { DEFAULT_CONSTRAINT_CONFIG } from '../music-engine'
 
 export interface SynthPreset {
   attack: number
@@ -23,8 +21,6 @@ export interface AppState {
   currentOctaveShift: number
   synthPreset: SynthPreset
   tonalFieldEnabled: boolean
-  constraintConfig: ConstraintEngineConfig
-  bpm: number
   setScaleType: (t: ScaleType) => void
   setPolyphony: (n: number) => void
   toggleHold: () => void
@@ -33,7 +29,6 @@ export interface AppState {
   setMidiConnected: (v: boolean) => void
   shiftOctave: (delta: number) => void
   setTonalFieldEnabled: (v: boolean) => void
-  setBpm: (bpm: number) => void
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -54,8 +49,6 @@ export const useStore = create<AppState>((set) => ({
     waveform: 'sine',
   },
   tonalFieldEnabled: false,
-  constraintConfig: { ...DEFAULT_CONSTRAINT_CONFIG, enabled: false },
-  bpm: 120,
   setScaleType: (scaleType) => set({ scaleType }),
   setPolyphony: (polyphony) => set({ polyphony }),
   toggleHold: () => set((s) => ({ holdEnabled: !s.holdEnabled })),
@@ -66,10 +59,5 @@ export const useStore = create<AppState>((set) => ({
     set((s) => ({
       currentOctaveShift: Math.max(-2, Math.min(2, s.currentOctaveShift + delta)),
     })),
-  setTonalFieldEnabled: (tonalFieldEnabled) =>
-    set((s) => ({
-      tonalFieldEnabled,
-      constraintConfig: { ...s.constraintConfig, enabled: tonalFieldEnabled },
-    })),
-  setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(300, bpm)) }),
+  setTonalFieldEnabled: (tonalFieldEnabled) => set({ tonalFieldEnabled }),
 }))

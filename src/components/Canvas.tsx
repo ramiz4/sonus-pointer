@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from 'react'
+import React, { useRef, useCallback, useEffect, useState } from 'react'
 import { useStore } from '../store'
 import { engine, midi, constraintEngine } from '../services'
 import {
@@ -16,12 +16,44 @@ interface ActiveNote {
 
 const SECONDARY_VOICE_VELOCITY_SCALE = 0.6
 
+function drawTonalMap(canvas: HTMLCanvasElement, width: number, height: number): void {
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  ctx.clearRect(0, 0, width, height)
+
+  const cols = 32
+  const rows = 16
+  const cellW = width / cols
+  const cellH = height / rows
+
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row++) {
+      const nx = col / cols
+      const tensionPc = Math.floor(nx * 12)
+      const stability = 1 - pitchClassStability(tensionPc)
+      const alpha = stability * 0.15
+      ctx.fillStyle = `rgba(99, 102, 241, ${alpha})`
+      ctx.fillRect(col * cellW, row * cellH, cellW, cellH)
+    }
+  }
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
+  ctx.font = '10px sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText('stable', width * 0.1, height - 4)
+  ctx.fillText('tense', width * 0.9, height - 4)
+}
+
 const Canvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const isPointerDown = useRef(false)
   const activeNotes = useRef<Map<number, ActiveNote>>(new Map())
   const secondaryVoiceIds = useRef<string[]>([])
+  const [canvasSize, setCanvasSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 })
   const {
     scaleType,
     rootNote,
@@ -48,46 +80,45 @@ const Canvas: React.FC = () => {
     })
   }, [effectiveRoot, octaves, tonalFieldEnabled])
 
-  // Draw tonal map visualization
+  // Clean up secondary voices when tonal field is disabled
+  useEffect(() => {
+    if (tonalFieldEnabled) return
+    for (const svId of secondaryVoiceIds.current) {
+      engine.noteOff(svId)
+    }
+    secondaryVoiceIds.current = []
+  }, [tonalFieldEnabled])
+
+  // Track canvas size via ResizeObserver for visualization redraws
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el) return
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        setCanvasSize({ w: width, h: height })
+      }
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  // Draw / clear tonal map visualization
   useEffect(() => {
     const canvas = overlayRef.current
-    if (!canvas || !tonalFieldEnabled) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (!canvas) return
 
-    const rect = canvasRef.current?.getBoundingClientRect()
-    if (!rect) return
-
-    canvas.width = rect.width
-    canvas.height = rect.height
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Draw stability zones
-    const cols = 32
-    const rows = 16
-    const cellW = canvas.width / cols
-    const cellH = canvas.height / rows
-
-    for (let col = 0; col < cols; col++) {
-      for (let row = 0; row < rows; row++) {
-        const nx = col / cols
-        // x=0 is stable (pitch class 0), higher x = more tension
-        const tensionPc = Math.floor(nx * 12)
-        const stability = 1 - pitchClassStability(tensionPc)
-        // Stable zones glow, unstable zones fade
-        const alpha = stability * 0.15
-        ctx.fillStyle = `rgba(99, 102, 241, ${alpha})`
-        ctx.fillRect(col * cellW, row * cellH, cellW, cellH)
-      }
+    if (!tonalFieldEnabled || canvasSize.w === 0) {
+      // Clear the canvas when tonal field is disabled
+      canvas.width = canvasSize.w
+      canvas.height = canvasSize.h
+      const ctx = canvas.getContext('2d')
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height)
+      return
     }
 
-    // Draw stability region labels at bottom
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
-    ctx.font = '10px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText('stable', canvas.width * 0.1, canvas.height - 4)
-    ctx.fillText('tense', canvas.width * 0.9, canvas.height - 4)
-  }, [tonalFieldEnabled, rootNote, currentOctaveShift])
+    drawTonalMap(canvas, canvasSize.w, canvasSize.h)
+  }, [tonalFieldEnabled, canvasSize])
 
   const playNote = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -212,12 +243,10 @@ const Canvas: React.FC = () => {
       onPointerUp={handlePointerUp}
       onPointerLeave={(e) => stopNote(e.pointerId)}
     >
-      {tonalFieldEnabled && (
-        <canvas
-          ref={overlayRef}
-          className="absolute inset-0 w-full h-full pointer-events-none"
-        />
-      )}
+      <canvas
+        ref={overlayRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+      />
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <p className="text-white/30 text-sm sm:text-lg select-none">
           {tonalFieldEnabled ? 'Explore the tonal field' : 'Touch or move to play'}

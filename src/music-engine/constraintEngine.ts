@@ -113,10 +113,17 @@ export class ConstraintEngine {
   }
 
   /**
-   * Update configuration at runtime.
+   * Update configuration at runtime. Nested objects are deep-merged
+   * so callers can update individual properties without losing defaults.
    */
   updateConfig(partial: Partial<ConstraintEngineConfig>): void {
-    this.config = { ...this.config, ...partial }
+    this.config = {
+      ...this.config,
+      ...partial,
+      tonalField: { ...this.config.tonalField, ...(partial.tonalField ?? {}) },
+      gravity: { ...this.config.gravity, ...(partial.gravity ?? {}) },
+      phrase: { ...this.config.phrase, ...(partial.phrase ?? {}) },
+    }
   }
 
   /**

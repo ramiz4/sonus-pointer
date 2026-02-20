@@ -16,22 +16,24 @@ describe('Constraint Engine', () => {
   })
 
   it('nearby positions produce related primary notes', () => {
-    const rng = createSeededRandom(42)
     const engine = new ConstraintEngine({
       enabled: true,
       gravity: { rootNote: 60, gravityStrength: 0.9 },
     })
 
-    // Sample many nearby positions and check primary notes share pitch classes
+    // Use separate identically-seeded RNGs so both loops get the same random sequence
+    const rngA = createSeededRandom(42)
     const notesA = new Set<number>()
-    const notesB = new Set<number>()
     for (let i = 0; i < 20; i++) {
-      const a = engine.process(0.3, 0.5, 100, rng())
+      const a = engine.process(0.3, 0.5, 100, rngA())
       notesA.add(a.primaryNote % 12)
     }
+
     engine.reset()
+    const rngB = createSeededRandom(42)
+    const notesB = new Set<number>()
     for (let i = 0; i < 20; i++) {
-      const b = engine.process(0.31, 0.5, 100, rng())
+      const b = engine.process(0.31, 0.5, 100, rngB())
       notesB.add(b.primaryNote % 12)
     }
     // Should share at least some pitch classes
@@ -67,10 +69,14 @@ describe('Constraint Engine', () => {
     expect(engine.getPhraseMemory().getLength()).toBe(0)
   })
 
-  it('updateConfig changes behavior', () => {
+  it('updateConfig deep-merges nested objects', () => {
     const engine = new ConstraintEngine({ enabled: true })
+    const originalOctaveRange = engine.getConfig().tonalField.octaveRange
     engine.updateConfig({ gravity: { rootNote: 48, gravityStrength: 1.0 } })
     const config = engine.getConfig()
     expect(config.gravity.rootNote).toBe(48)
+    expect(config.gravity.gravityStrength).toBe(1.0)
+    // tonalField should be preserved
+    expect(config.tonalField.octaveRange).toBe(originalOctaveRange)
   })
 })

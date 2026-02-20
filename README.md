@@ -40,7 +40,7 @@ Open http://localhost:5173, move your mouse over the canvas to play.
 
 ## From Instrument to Musical Space
 
-CursorCantus evolves sonus-pointer from a direct instrument into an interactive musical exploration environment, inspired by Laurie Spiegel's philosophy of compositional systems.
+sonus-pointer evolves from a direct instrument into an interactive musical exploration environment, inspired by Laurie Spiegel's philosophy of compositional systems.
 
 ### Architecture
 
