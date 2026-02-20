@@ -105,14 +105,15 @@ const Canvas: React.FC = () => {
     <div
       ref={canvasRef}
       data-testid="canvas"
-      className="w-full h-96 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl cursor-crosshair select-none relative overflow-hidden"
+      className="w-full h-52 sm:h-72 md:h-96 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl cursor-crosshair select-none relative overflow-hidden"
+      style={{ touchAction: 'none' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={(e) => stopNote(e.pointerId)}
     >
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <p className="text-white/30 text-lg select-none">Move mouse to play</p>
+        <p className="text-white/30 text-sm sm:text-lg select-none">Touch or move to play</p>
       </div>
     </div>
   )

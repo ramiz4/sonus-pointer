@@ -24,12 +24,12 @@ const App: React.FC = () => {
   }, [toggleHold, shiftOctave])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center gap-6 p-6">
-      <h1 className="text-3xl font-bold tracking-tight">sonus-pointer</h1>
-      <p className="text-gray-400 text-sm">
-        Move mouse across canvas · Space = Hold · ↑↓ = Octave
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center gap-4 sm:gap-6 p-3 sm:p-6">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">sonus-pointer</h1>
+      <p className="text-gray-400 text-xs sm:text-sm text-center px-2">
+        Touch or move mouse · Space = Hold · ↑↓ = Octave
       </p>
-      <div className="w-full max-w-3xl flex flex-col gap-4">
+      <div className="w-full max-w-3xl flex flex-col gap-3 sm:gap-4">
         <Canvas />
         <Controls />
       </div>

@@ -25,14 +25,14 @@ const Controls: React.FC = () => {
   }, [setMidiConnected])
 
   return (
-    <div className="flex flex-wrap gap-4 items-center justify-center p-4 bg-gray-900 rounded-xl">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 sm:p-4 bg-gray-900 rounded-xl">
       {/* Scale selector */}
       <label className="flex flex-col gap-1 text-white text-sm">
         Scale
         <select
           value={scaleType}
           onChange={(e) => setScaleType(e.target.value as ScaleType)}
-          className="bg-gray-700 text-white rounded px-2 py-1"
+          className="bg-gray-700 text-white rounded px-2 py-2 min-h-[44px] text-sm"
         >
           <option value="diatonic">Diatonic (Major)</option>
           <option value="chromatic">Chromatic</option>
@@ -45,7 +45,7 @@ const Controls: React.FC = () => {
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value as 'line' | 'improv')}
-          className="bg-gray-700 text-white rounded px-2 py-1"
+          className="bg-gray-700 text-white rounded px-2 py-2 min-h-[44px] text-sm"
         >
           <option value="line">Line</option>
           <option value="improv">Improv</option>
@@ -58,7 +58,7 @@ const Controls: React.FC = () => {
         <select
           value={polyphony}
           onChange={(e) => setPolyphony(Number(e.target.value))}
-          className="bg-gray-700 text-white rounded px-2 py-1"
+          className="bg-gray-700 text-white rounded px-2 py-2 min-h-[44px] text-sm"
         >
           {[1, 2, 3, 4].map((n) => (
             <option key={n} value={n}>
@@ -71,7 +71,7 @@ const Controls: React.FC = () => {
       {/* Hold toggle */}
       <button
         onClick={toggleHold}
-        className={`px-4 py-2 rounded text-white text-sm font-medium ${
+        className={`min-h-[44px] rounded text-white text-sm font-medium ${
           holdEnabled ? 'bg-indigo-600' : 'bg-gray-700'
         }`}
         aria-pressed={holdEnabled}
@@ -80,7 +80,7 @@ const Controls: React.FC = () => {
       </button>
 
       {/* Volume */}
-      <label className="flex flex-col gap-1 text-white text-sm">
+      <label className="flex flex-col gap-1 text-white text-sm col-span-2 sm:col-span-1">
         Volume
         <input
           type="range"
@@ -89,14 +89,14 @@ const Controls: React.FC = () => {
           step={0.01}
           value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          className="accent-indigo-500"
+          className="accent-indigo-500 w-full h-[44px]"
         />
       </label>
 
       {/* MIDI */}
       <button
         onClick={handleMidiConnect}
-        className={`px-4 py-2 rounded text-white text-sm font-medium ${
+        className={`min-h-[44px] rounded text-white text-sm font-medium col-span-2 sm:col-span-1 ${
           midiConnected ? 'bg-green-600' : 'bg-gray-700'
         }`}
       >
