@@ -20,6 +20,7 @@ export interface AppState {
   midiConnected: boolean
   currentOctaveShift: number
   synthPreset: SynthPreset
+  tonalFieldEnabled: boolean
   setScaleType: (t: ScaleType) => void
   setPolyphony: (n: number) => void
   toggleHold: () => void
@@ -27,6 +28,7 @@ export interface AppState {
   setMode: (m: 'line' | 'improv') => void
   setMidiConnected: (v: boolean) => void
   shiftOctave: (delta: number) => void
+  setTonalFieldEnabled: (v: boolean) => void
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -46,6 +48,7 @@ export const useStore = create<AppState>((set) => ({
     release: 0.3,
     waveform: 'sine',
   },
+  tonalFieldEnabled: false,
   setScaleType: (scaleType) => set({ scaleType }),
   setPolyphony: (polyphony) => set({ polyphony }),
   toggleHold: () => set((s) => ({ holdEnabled: !s.holdEnabled })),
@@ -56,4 +59,5 @@ export const useStore = create<AppState>((set) => ({
     set((s) => ({
       currentOctaveShift: Math.max(-2, Math.min(2, s.currentOctaveShift + delta)),
     })),
+  setTonalFieldEnabled: (tonalFieldEnabled) => set({ tonalFieldEnabled }),
 }))

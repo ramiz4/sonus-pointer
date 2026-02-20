@@ -11,12 +11,14 @@ const Controls: React.FC = () => {
     volume,
     mode,
     midiConnected,
+    tonalFieldEnabled,
     setScaleType,
     setPolyphony,
     toggleHold,
     setVolume,
     setMode,
     setMidiConnected,
+    setTonalFieldEnabled,
   } = useStore()
 
   const handleMidiConnect = useCallback(async () => {
@@ -101,6 +103,17 @@ const Controls: React.FC = () => {
         }`}
       >
         {midiConnected ? 'MIDI Connected' : 'Connect MIDI'}
+      </button>
+
+      {/* Tonal Field toggle */}
+      <button
+        onClick={() => setTonalFieldEnabled(!tonalFieldEnabled)}
+        className={`min-h-[44px] rounded text-white text-sm font-medium col-span-2 sm:col-span-1 ${
+          tonalFieldEnabled ? 'bg-purple-600' : 'bg-gray-700'
+        }`}
+        aria-pressed={tonalFieldEnabled}
+      >
+        Tonal Field {tonalFieldEnabled ? 'ON' : 'OFF'}
       </button>
     </div>
   )

@@ -1,5 +1,14 @@
 import '@testing-library/jest-dom'
 
+// Mock ResizeObserver for jsdom
+class MockResizeObserver {
+  observe = jest.fn()
+  unobserve = jest.fn()
+  disconnect = jest.fn()
+}
+;(globalThis as unknown as Record<string, unknown>).ResizeObserver =
+  MockResizeObserver as unknown as typeof ResizeObserver
+
 // Mock AudioContext for all tests
 class MockAudioContext {
   createGain() {
