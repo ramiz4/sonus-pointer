@@ -110,9 +110,15 @@ const Canvas: React.FC = () => {
     synthPreset,
   } = useStore()
 
-  // Apply volume and polyphony changes directly
-  engine.setVolume(volume)
-  engine.setMaxVoices(polyphony)
+  // Apply volume change only when it actually changes
+  useEffect(() => {
+    engine.setVolume(volume)
+  }, [volume])
+
+  // Apply polyphony change only when it actually changes
+  useEffect(() => {
+    engine.setMaxVoices(polyphony)
+  }, [polyphony])
 
   // Apply waveform change only when it actually changes
   useEffect(() => {
@@ -209,7 +215,11 @@ const Canvas: React.FC = () => {
         midi.noteOff(0, existing.noteNumber)
         setPlayingNotes((prev) => {
           const next = new Set(prev)
-          next.delete(existing.noteNumber)
+          // Only remove from display if no other pointer is still holding this note
+          const stillActive = Array.from(activeNotes.current.values()).some(
+            (v) => v.noteNumber === existing.noteNumber && v.voiceId !== existing.voiceId
+          )
+          if (!stillActive) next.delete(existing.noteNumber)
           return next
         })
       }
@@ -247,9 +257,9 @@ const Canvas: React.FC = () => {
         engine.noteOff(note.voiceId)
         midi.noteOff(0, note.noteNumber)
         activeNotes.current.delete(pointerId)
-        setPlayingNotes((prev) => {
-          const next = new Set(prev)
-          next.delete(note.noteNumber)
+        setPlayingNotes(() => {
+          const next = new Set<number>()
+          activeNotes.current.forEach((activeNote) => next.add(activeNote.noteNumber))
           return next
         })
       }
@@ -296,6 +306,14 @@ const Canvas: React.FC = () => {
     [stopNote]
   )
 
+  const handlePointerCancel = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      activePointers.current.delete(e.pointerId)
+      stopNote(e.pointerId)
+    },
+    [stopNote]
+  )
+
   const playingNoteNames = useMemo(
     () => [...playingNotes].sort((a, b) => a - b).map(midiNoteToName).join('  '),
     [playingNotes]
@@ -311,6 +329,8 @@ const Canvas: React.FC = () => {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerCancel}
+      onLostPointerCapture={handlePointerCancel}
     >
       <canvas
         ref={overlayRef}
