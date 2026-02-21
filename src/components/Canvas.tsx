@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect, useState } from 'react'
+import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import { useStore } from '../store'
 import { engine, midi, constraintEngine } from '../services'
 import {
@@ -6,6 +6,7 @@ import {
   normalizeMousePosition,
   mapPositionToPitch,
   mapPositionToVelocity,
+  midiNoteToName,
 } from '../utils/mapping'
 import { pitchClassStability } from '../music-engine'
 
@@ -47,13 +48,55 @@ function drawTonalMap(canvas: HTMLCanvasElement, width: number, height: number):
   ctx.fillText('tense', width * 0.9, height - 4)
 }
 
+function drawNoteGrid(
+  canvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  scaleNotes: number[]
+): void {
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  ctx.clearRect(0, 0, width, height)
+
+  if (scaleNotes.length === 0) return
+
+  const noteWidth = width / scaleNotes.length
+
+  scaleNotes.forEach((note, i) => {
+    const x = i * noteWidth
+    // Alternate shading for visual separation
+    const isEven = i % 2 === 0
+    ctx.fillStyle = isEven ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.08)'
+    ctx.fillRect(x, 0, noteWidth, height)
+
+    // Divider line
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, height)
+    ctx.stroke()
+
+    // Note name at bottom
+    const name = midiNoteToName(note)
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'
+    ctx.font = `${Math.max(9, Math.min(12, noteWidth - 2))}px sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText(name, x + noteWidth / 2, height - 6)
+  })
+}
+
 const Canvas: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
-  const isPointerDown = useRef(false)
+  const activePointers = useRef<Set<number>>(new Set())
   const activeNotes = useRef<Map<number, ActiveNote>>(new Map())
   const secondaryVoiceIds = useRef<string[]>([])
   const [canvasSize, setCanvasSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 })
+  const [playingNotes, setPlayingNotes] = useState<Set<number>>(new Set())
   const {
     scaleType,
     rootNote,
@@ -64,11 +107,17 @@ const Canvas: React.FC = () => {
     mode,
     currentOctaveShift,
     tonalFieldEnabled,
+    synthPreset,
   } = useStore()
 
   // Apply volume and polyphony changes directly
   engine.setVolume(volume)
   engine.setMaxVoices(polyphony)
+
+  // Apply waveform change only when it actually changes
+  useEffect(() => {
+    engine.setWaveform(synthPreset.waveform)
+  }, [synthPreset.waveform])
 
   // Update constraint engine config when root changes
   const effectiveRoot = rootNote + currentOctaveShift * 12
@@ -103,22 +152,18 @@ const Canvas: React.FC = () => {
     return () => observer.disconnect()
   }, [])
 
-  // Draw / clear tonal map visualization
+  // Draw tonal map or note grid visualization
   useEffect(() => {
     const canvas = overlayRef.current
-    if (!canvas) return
+    if (!canvas || canvasSize.w === 0) return
 
-    if (!tonalFieldEnabled || canvasSize.w === 0) {
-      // Clear the canvas when tonal field is disabled
-      canvas.width = canvasSize.w
-      canvas.height = canvasSize.h
-      const ctx = canvas.getContext('2d')
-      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height)
-      return
+    if (tonalFieldEnabled) {
+      drawTonalMap(canvas, canvasSize.w, canvasSize.h)
+    } else {
+      const scaleNotes = getScaleNotes({ type: scaleType, rootNote: effectiveRoot, octaves })
+      drawNoteGrid(canvas, canvasSize.w, canvasSize.h, scaleNotes)
     }
-
-    drawTonalMap(canvas, canvasSize.w, canvasSize.h)
-  }, [tonalFieldEnabled, canvasSize])
+  }, [tonalFieldEnabled, canvasSize, scaleType, effectiveRoot, octaves])
 
   const playNote = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -162,12 +207,18 @@ const Canvas: React.FC = () => {
       if (existing && existing.noteNumber !== noteNumber) {
         engine.noteOff(voiceId)
         midi.noteOff(0, existing.noteNumber)
+        setPlayingNotes((prev) => {
+          const next = new Set(prev)
+          next.delete(existing.noteNumber)
+          return next
+        })
       }
 
       if (!existing || existing.noteNumber !== noteNumber) {
         engine.noteOn(voiceId, noteNumber, velocity)
         midi.noteOn(0, noteNumber, velocity)
         activeNotes.current.set(e.pointerId, { voiceId, noteNumber })
+        setPlayingNotes((prev) => new Set([...prev, noteNumber]))
       }
 
       // Handle secondary voices from constraint engine
@@ -196,6 +247,11 @@ const Canvas: React.FC = () => {
         engine.noteOff(note.voiceId)
         midi.noteOff(0, note.noteNumber)
         activeNotes.current.delete(pointerId)
+        setPlayingNotes((prev) => {
+          const next = new Set(prev)
+          next.delete(note.noteNumber)
+          return next
+        })
       }
       // Stop secondary voices
       for (const svId of secondaryVoiceIds.current) {
@@ -209,7 +265,7 @@ const Canvas: React.FC = () => {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       engine.resume()
-      isPointerDown.current = true
+      activePointers.current.add(e.pointerId)
       ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
       playNote(e)
     },
@@ -218,7 +274,7 @@ const Canvas: React.FC = () => {
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPointerDown.current) return
+      if (!activePointers.current.has(e.pointerId)) return
       playNote(e)
     },
     [playNote]
@@ -226,10 +282,23 @@ const Canvas: React.FC = () => {
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      isPointerDown.current = false
+      activePointers.current.delete(e.pointerId)
       stopNote(e.pointerId)
     },
     [stopNote]
+  )
+
+  const handlePointerLeave = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      activePointers.current.delete(e.pointerId)
+      stopNote(e.pointerId)
+    },
+    [stopNote]
+  )
+
+  const playingNoteNames = useMemo(
+    () => [...playingNotes].sort((a, b) => a - b).map(midiNoteToName).join('  '),
+    [playingNotes]
   )
 
   return (
@@ -241,16 +310,22 @@ const Canvas: React.FC = () => {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerLeave={(e) => stopNote(e.pointerId)}
+      onPointerLeave={handlePointerLeave}
     >
       <canvas
         ref={overlayRef}
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <p className="text-white/30 text-sm sm:text-lg select-none">
-          {tonalFieldEnabled ? 'Explore the tonal field' : 'Touch or move to play'}
-        </p>
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
+        {playingNotes.size > 0 ? (
+          <p className="text-white/80 text-2xl sm:text-4xl font-bold tracking-widest select-none drop-shadow-lg">
+            {playingNoteNames}
+          </p>
+        ) : (
+          <p className="text-white/30 text-sm sm:text-lg select-none">
+            {tonalFieldEnabled ? 'Explore the tonal field' : 'Touch or slide to play'}
+          </p>
+        )}
       </div>
     </div>
   )

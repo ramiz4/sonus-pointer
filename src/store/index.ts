@@ -22,6 +22,7 @@ export interface AppState {
   synthPreset: SynthPreset
   tonalFieldEnabled: boolean
   setScaleType: (t: ScaleType) => void
+  setRootNote: (n: number) => void
   setPolyphony: (n: number) => void
   toggleHold: () => void
   setVolume: (v: number) => void
@@ -29,10 +30,11 @@ export interface AppState {
   setMidiConnected: (v: boolean) => void
   shiftOctave: (delta: number) => void
   setTonalFieldEnabled: (v: boolean) => void
+  setWaveform: (w: OscillatorType) => void
 }
 
 export const useStore = create<AppState>((set) => ({
-  scaleType: 'diatonic',
+  scaleType: 'pentatonic',
   rootNote: 60,
   octaves: 3,
   polyphony: 4,
@@ -50,6 +52,7 @@ export const useStore = create<AppState>((set) => ({
   },
   tonalFieldEnabled: false,
   setScaleType: (scaleType) => set({ scaleType }),
+  setRootNote: (rootNote) => set({ rootNote }),
   setPolyphony: (polyphony) => set({ polyphony }),
   toggleHold: () => set((s) => ({ holdEnabled: !s.holdEnabled })),
   setVolume: (volume) => set({ volume }),
@@ -60,4 +63,5 @@ export const useStore = create<AppState>((set) => ({
       currentOctaveShift: Math.max(-2, Math.min(2, s.currentOctaveShift + delta)),
     })),
   setTonalFieldEnabled: (tonalFieldEnabled) => set({ tonalFieldEnabled }),
+  setWaveform: (waveform) => set((s) => ({ synthPreset: { ...s.synthPreset, waveform } })),
 }))

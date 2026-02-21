@@ -4,6 +4,7 @@ import {
   mapPositionToPitch,
   mapPositionToVelocity,
   midiNoteToFrequency,
+  midiNoteToName,
 } from '../utils/mapping'
 
 describe('normalizeMousePosition', () => {
@@ -37,6 +38,44 @@ describe('getScaleNotes', () => {
     expect(notes).toHaveLength(12)
   })
 
+  it('returns 5 notes per octave for pentatonic', () => {
+    const notes = getScaleNotes({ type: 'pentatonic', rootNote: 60, octaves: 1 })
+    expect(notes).toHaveLength(5)
+    expect(notes[0]).toBe(60)
+  })
+
+  it('returns 6 notes per octave for blues', () => {
+    const notes = getScaleNotes({ type: 'blues', rootNote: 60, octaves: 1 })
+    expect(notes).toHaveLength(6)
+    expect(notes[0]).toBe(60)
+  })
+
+  it('returns 7 notes per octave for natural minor', () => {
+    const notes = getScaleNotes({ type: 'minor', rootNote: 60, octaves: 1 })
+    expect(notes).toHaveLength(7)
+    expect(notes[0]).toBe(60)
+  })
+
+  it('returns 7 notes per octave for dorian', () => {
+    const notes = getScaleNotes({ type: 'dorian', rootNote: 60, octaves: 1 })
+    expect(notes).toHaveLength(7)
+  })
+
+  it('returns 7 notes per octave for phrygian', () => {
+    const notes = getScaleNotes({ type: 'phrygian', rootNote: 60, octaves: 1 })
+    expect(notes).toHaveLength(7)
+  })
+
+  it('returns 7 notes per octave for lydian', () => {
+    const notes = getScaleNotes({ type: 'lydian', rootNote: 60, octaves: 1 })
+    expect(notes).toHaveLength(7)
+  })
+
+  it('returns 7 notes per octave for mixolydian', () => {
+    const notes = getScaleNotes({ type: 'mixolydian', rootNote: 60, octaves: 1 })
+    expect(notes).toHaveLength(7)
+  })
+
   it('starts at rootNote', () => {
     const notes = getScaleNotes({ type: 'diatonic', rootNote: 60, octaves: 1 })
     expect(notes[0]).toBe(60)
@@ -45,6 +84,11 @@ describe('getScaleNotes', () => {
   it('spans multiple octaves', () => {
     const notes = getScaleNotes({ type: 'diatonic', rootNote: 60, octaves: 2 })
     expect(notes).toHaveLength(14)
+  })
+
+  it('pentatonic spans multiple octaves correctly', () => {
+    const notes = getScaleNotes({ type: 'pentatonic', rootNote: 60, octaves: 2 })
+    expect(notes).toHaveLength(10)
   })
 
   it('does not exceed MIDI note 127', () => {
@@ -93,5 +137,23 @@ describe('midiNoteToFrequency', () => {
 
   it('A5 (81) = 880 Hz', () => {
     expect(midiNoteToFrequency(81)).toBeCloseTo(880)
+  })
+})
+
+describe('midiNoteToName', () => {
+  it('C4 (60) = C4', () => {
+    expect(midiNoteToName(60)).toBe('C4')
+  })
+
+  it('A4 (69) = A4', () => {
+    expect(midiNoteToName(69)).toBe('A4')
+  })
+
+  it('C#4 (61) = C#4', () => {
+    expect(midiNoteToName(61)).toBe('C#4')
+  })
+
+  it('C5 (72) = C5', () => {
+    expect(midiNoteToName(72)).toBe('C5')
   })
 })
