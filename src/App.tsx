@@ -25,10 +25,13 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center gap-4 sm:gap-6 p-3 sm:p-6">
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">sonus-pointer</h1>
-      <p className="text-gray-400 text-xs sm:text-sm text-center px-2">
-        Touch or move mouse · Space = Hold · ↑↓ = Octave
-      </p>
+      <div className="text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">🎵 Sonus</h1>
+        <p className="text-gray-400 text-xs sm:text-sm mt-1">
+          Slide left–right to change pitch · up–down for velocity · use multiple fingers
+        </p>
+        <p className="text-gray-600 text-xs mt-0.5">Space = Hold · ↑↓ = Octave shift</p>
+      </div>
       <div className="w-full max-w-3xl flex flex-col gap-3 sm:gap-4">
         <Canvas />
         <Controls />

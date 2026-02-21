@@ -14,6 +14,6 @@ describe('App', () => {
 
   it('renders the title', () => {
     const { getByText } = render(<App />)
-    expect(getByText('sonus-pointer')).toBeInTheDocument()
+    expect(getByText('🎵 Sonus')).toBeInTheDocument()
   })
 })

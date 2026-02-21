@@ -46,6 +46,10 @@ export class AudioEngine {
     this.maxVoices = n
   }
 
+  setWaveform(waveform: OscillatorType): void {
+    this.settings.waveform = waveform
+  }
+
   noteOn(id: string, noteNumber: number, velocity = 100): void {
     if (this.voices.has(id)) {
       this.noteOff(id)
