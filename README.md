@@ -2,6 +2,8 @@
 
 A browser-based musical instrument that converts mouse movement into melodic music with harmonic logic.
 
+Live Demo: https://ramiz4.github.io/sonus-pointer/
+
 ## Features
 - Mouse X → pitch (diatonic/chromatic scales)
 - Mouse Y → velocity
